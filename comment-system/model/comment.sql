@@ -1,3 +1,19 @@
+CREATE TABLE `video` (
+    `id` bigint(20) NOT NULL AUTO_INCREMENT,
+    `title` varchar(255) NOT NULL DEFAULT '' COMMENT '视频标题',
+    `cover` varchar(255) NOT NULL DEFAULT '' COMMENT '封面图',
+    `author_id` bigint(20) NOT NULL DEFAULT '0' COMMENT '作者ID',
+    `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='视频表';
+
+-- 预置一些视频数据
+INSERT INTO `video` (`id`, `title`, `cover`, `author_id`) VALUES 
+(1001, '周杰伦新歌首发，太好听了！', 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200', 1),
+(1002, '成都大熊猫基地一日游 🐼', 'https://images.unsplash.com/photo-1564349683136-77e08bef1ef1?w=200', 2),
+(1003, '家常红烧肉保姆级教程，入口即化', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200', 3),
+(1004, '这就是大自然的鬼斧神工吗？太震撼了', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200', 1);
+
 CREATE TABLE `comment` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '评论ID',
   `video_id` bigint(20) NOT NULL DEFAULT '0' COMMENT '视频ID',

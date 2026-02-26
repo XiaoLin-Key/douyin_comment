@@ -21,13 +21,75 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        .container {
-            max-width: 600px;
+        /* 布局优化 */
+        .main-layout {
+            display: flex;
+            max-width: 1000px;
             margin: 0 auto;
+            height: 100vh;
+            gap: 20px;
+        }
+
+        /* 侧边视频列表 */
+        .video-sidebar {
+            width: 260px;
+            background: var(--item-bg);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .video-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .video-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .video-item.active {
+            background: rgba(254, 44, 85, 0.1);
+            border-color: var(--accent-color);
+        }
+
+        .video-cover {
+            width: 60px;
+            height: 80px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .video-title {
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .container {
+            flex: 1;
+            max-width: 600px;
             height: 100vh;
             display: flex;
             flex-direction: column;
+            background: var(--bg-color);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        /* 原有样式保持不变... */
 
         /* 顶部导航 */
         .header {
@@ -282,24 +344,34 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="login-section" id="loginSection">
-            <!-- 动态显示登录状态 -->
-        </div>
-        <div class="header">评论区</div>
-        
-        <div class="comment-list" id="commentList">
-            <!-- 动态加载 -->
-        </div>
-
-        <div id="replyBar" class="reply-bar">
-            <span id="replyInfo">正在回复 @用户...</span>
-            <span class="close-reply" onclick="cancelReply()">×</span>
+    <div class="main-layout">
+        <!-- 侧边视频选择器 -->
+        <div class="video-sidebar">
+            <h3 style="padding: 0 10px; margin-bottom: 20px;">选择视频</h3>
+            <div id="videoList">
+                <!-- 视频列表将由 JS 渲染 -->
+            </div>
         </div>
 
-        <div class="input-area">
-            <input type="text" id="commentInput" placeholder="善语结善缘，恶语伤人心">
-            <div class="send-btn" onclick="sendComment()">发布</div>
+        <div class="container">
+            <div class="login-section" id="loginSection">
+                <!-- 动态显示登录状态 -->
+            </div>
+            <div class="header" id="currentVideoTitle">评论区</div>
+            
+            <div class="comment-list" id="commentList">
+                <!-- 动态加载 -->
+            </div>
+
+            <div id="replyBar" class="reply-bar">
+                <span id="replyInfo">正在回复 @用户...</span>
+                <span class="close-reply" onclick="cancelReply()">×</span>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="commentInput" placeholder="善语结善缘，恶语伤人心">
+                <div class="send-btn" onclick="sendComment()">发布</div>
+            </div>
         </div>
     </div>
 
@@ -322,10 +394,41 @@
 
     <script>
         const API_BASE = 'http://localhost:8888/api/v1';
-        const VIDEO_ID = 1001;
         
+        // 模拟视频数据
+        const VIDEOS = [
+            { id: 1001, title: '周杰伦新歌首发，太好听了！', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=200' },
+            { id: 1002, title: '成都大熊猫基地一日游 🐼', cover: 'https://images.unsplash.com/photo-1564349683136-77e08bef1ef1?w=200' },
+            { id: 1003, title: '家常红烧肉保姆级教程，入口即化', cover: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=200' },
+            { id: 1004, title: '这就是大自然的鬼斧神工吗？太震撼了', cover: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200' }
+        ];
+
+        let VIDEO_ID = 1001; // 默认视频
         let USER_ID = 0; 
         let AUTH_TOKEN = localStorage.getItem('token') || '';
+
+        // 渲染视频列表
+        function renderVideoSidebar() {
+            const sidebar = document.getElementById('videoList');
+            sidebar.innerHTML = VIDEOS.map(v => `
+                <div class="video-item ${v.id === VIDEO_ID ? 'active' : ''}" onclick="switchVideo(${v.id})">
+                    <div class="video-cover" style="background-image: url('${v.cover}')"></div>
+                    <div class="video-title">${v.title}</div>
+                </div>
+            `).join('');
+            
+            const currentVideo = VIDEOS.find(v => v.id === VIDEO_ID);
+            document.getElementById('currentVideoTitle').innerText = currentVideo ? currentVideo.title : '评论区';
+        }
+
+        async function switchVideo(id) {
+            if (id === VIDEO_ID) return;
+            VIDEO_ID = id;
+            expandedRootIds.clear(); // 切换视频清空展开状态
+            cancelReply(); // 切换视频重置回复状态
+            renderVideoSidebar();
+            await loadComments(false); // 切换视频滚动到顶部
+        }
 
         let replyingToId = 0; 
         let replyingToRootId = 0; 
@@ -727,6 +830,7 @@
         });
 
         initAuth();
+        renderVideoSidebar();
         window.onload = loadComments;
     </script>
 </body>
