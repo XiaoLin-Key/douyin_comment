@@ -1,0 +1,113 @@
+syntax = "v1"
+
+info (
+	title:   "评论系统API"
+	desc:    "仿抖音评论系统API"
+	author:  "author"
+	version: "v1.0"
+)
+
+type (
+	CommentRequest {
+		VideoID  int64  `json:"video_id"`
+		UserID   int64  `json:"user_id"`
+		Content  string `json:"content"`
+		ParentID int64  `json:"parent_id,optional,default=0"`
+	}
+	CommentResponse {
+		ID        int64  `json:"id"`
+		CreatedAt string `json:"created_at"`
+	}
+	GetCommentsRequest {
+		VideoID  int64 `form:"video_id"`
+		RootID   int64 `form:"root_id,optional,default=0"` // 0表示查顶级评论，>0表示查该根评论下的子评论
+		UserID   int64 `form:"user_id,optional"` // 用于判断点赞状态
+		Page     int64 `form:"page,optional,default=1"`
+		PageSize int64 `form:"page_size,optional,default=10"`
+	}
+	GetCommentsResponse {
+		Comments []*CommentTree `json:"comments"`
+		Total    int64          `json:"total"`
+	}
+	CommentTree {
+		Comment    Comment        `json:"comment"`
+		Replies    []*CommentTree `json:"replies,omitempty"`
+		HasMore    bool           `json:"has_more"` // 是否还有更多子评论
+		ReplyTotal int64          `json:"reply_total"` // 子评论总数
+		ReplyPage  int64          `json:"reply_page"` // 当前子评论页码
+	}
+	Comment {
+		ID            int64  `json:"id"`
+		VideoID       int64  `json:"video_id"`
+		UserID        int64  `json:"user_id"`
+		Nickname      string `json:"nickname"`
+		Avatar        string `json:"avatar"`
+		IPLocation    string `json:"ip_location"`
+		IsAuthor      bool   `json:"is_author"` // 是否是视频作者
+		Content       string `json:"content"`
+		ParentID      int64  `json:"parent_id"`
+		ReplyToID     int64  `json:"reply_to_id"` // 回复的目标用户ID
+		ReplyToName   string `json:"reply_to_name"` // 回复的目标用户昵称
+		RootID        int64  `json:"root_id"`
+		LikeCount     int64  `json:"like_count"`
+		ReplyCount    int64  `json:"reply_count"`
+		IsLiked       bool   `json:"is_liked"`
+		IsAuthorLiked bool   `json:"is_author_liked"` // 视频作者是否赞过
+		CreatedAt     string `json:"created_at"` // 格式化后的时间：刚刚、分钟前等
+	}
+	LikeCommentRequest {
+		CommentID int64 `json:"comment_id"`
+		UserID    int64 `json:"user_id"`
+		Action    int64 `json:"action"`
+	}
+	LikeCommentResponse {
+		LikeCount int64 `json:"like_count"`
+	}
+	DeleteCommentRequest {
+		CommentID int64 `json:"comment_id"`
+		UserID    int64 `json:"user_id"`
+	}
+	DeleteCommentResponse {
+		Success bool `json:"success"`
+	}
+	LoginRequest {
+		UserID int64 `json:"user_id"`
+	}
+	LoginResponse {
+		Token string `json:"token"`
+	}
+)
+
+@server (
+	prefix: /api/v1
+	group:  comment
+)
+service comment-api {
+	@doc "登录"
+	@handler login
+	post /login (LoginRequest) returns (LoginResponse)
+
+	@doc "获取评论列表"
+	@handler getComments
+	get /comments (GetCommentsRequest) returns (GetCommentsResponse)
+}
+
+@server (
+	prefix: /api/v1
+	group:  comment
+	jwt:    Auth
+)
+service comment-api {
+	@doc "发布评论"
+	@handler createComment
+	post /comment (CommentRequest) returns (CommentResponse)
+
+	@doc "点赞/取消点赞评论"
+	@handler likeComment
+	post /comment/like (LikeCommentRequest) returns (LikeCommentResponse)
+
+	@doc "删除评论"
+	@handler deleteComment
+	delete /comment (DeleteCommentRequest) returns (DeleteCommentResponse)
+}
+

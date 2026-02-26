@@ -1,0 +1,8 @@
+Name: comment.rpc
+ListenOn: 0.0.0.0:8080
+Mysql:
+  DataSource: "root:123456@tcp(172.16.11.128:3306)/douyin?parseTime=true&loc=Local"
+# Etcd:
+#   Hosts:
+#   - 127.0.0.1:2379
+#   Key: comment.rpc

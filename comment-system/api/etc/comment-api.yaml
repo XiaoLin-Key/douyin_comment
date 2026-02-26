@@ -1,0 +1,12 @@
+Name: comment-api
+Host: 0.0.0.0
+Port: 8888
+Mysql:
+  DataSource: "root:123456@tcp(172.16.11.128:3306)/douyin?parseTime=true&loc=Local"
+Auth:
+  AccessSecret: "comment-system-secret"
+  AccessExpire: 86400
+CommentRpc:
+  Endpoints:
+    - 127.0.0.1:8080
+  NonBlock: true

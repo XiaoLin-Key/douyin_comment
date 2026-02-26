@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package comment;
+
+option go_package = "./comment";
+
+message Comment {
+  int64 id = 1;
+  int64 video_id = 2;
+  int64 user_id = 3;
+  string nickname = 4;
+  string avatar = 5;
+  string ip_location = 6;
+  bool is_author = 7;
+  string content = 8;
+  int64 parent_id = 9;
+  int64 reply_to_id = 10;
+  string reply_to_name = 11;
+  int64 root_id = 12;
+  int64 like_count = 13;
+  int64 reply_count = 14;
+  bool is_liked = 15;
+  bool is_author_liked = 16;
+  string created_at = 17;
+}
+
+message CommentTree {
+  Comment comment = 1;
+  repeated CommentTree replies = 2;
+  bool has_more = 3;
+  int64 reply_total = 4;
+  int64 reply_page = 5;
+}
+
+message CreateCommentRequest {
+  int64 video_id = 1;
+  int64 user_id = 2;
+  string content = 3;
+  int64 parent_id = 4;
+}
+
+message CreateCommentResponse {
+  int64 id = 1;
+  string created_at = 2;
+}
+
+message GetCommentsRequest {
+  int64 video_id = 1;
+  int64 root_id = 2; // 0表示查顶级评论，>0表示查该根评论下的子评论
+  int64 user_id = 3; // 当前用户ID，用于判断点赞
+  int64 page = 4;
+  int64 page_size = 5;
+}
+
+message GetCommentsResponse {
+  repeated CommentTree comments = 1;
+  int64 total = 2;
+}
+
+message LikeCommentRequest {
+  int64 comment_id = 1;
+  int64 user_id = 2;
+  int64 action = 3;
+}
+
+message LikeCommentResponse {
+  int64 like_count = 1;
+}
+
+message DeleteCommentRequest {
+  int64 comment_id = 1;
+  int64 user_id = 2;
+}
+
+message DeleteCommentResponse {
+  bool success = 1;
+}
+
+service CommentService {
+  rpc CreateComment(CreateCommentRequest) returns(CreateCommentResponse);
+  rpc GetComments(GetCommentsRequest) returns(GetCommentsResponse);
+  rpc LikeComment(LikeCommentRequest) returns(LikeCommentResponse);
+  rpc DeleteComment(DeleteCommentRequest) returns(DeleteCommentResponse);
+}
